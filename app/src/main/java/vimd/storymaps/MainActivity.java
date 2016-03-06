@@ -164,14 +164,12 @@ public class MainActivity extends AppCompatActivity
 
             final CharSequence name = place.getName();
             final CharSequence address = place.getAddress();
-            String attributions = PlacePicker.getAttributions(data);
-            if (attributions == null) {
-                attributions = "";
-            }
+            final String id = place.getId();
+
 
             placeName.setText(name);
             placeAddress.setText(address);
-            placeCoordinates.setText(Html.fromHtml(attributions));
+            placeCoordinates.setText(id);
 
         } else {
             super.onActivityResult(requestCode, resultCode, data);

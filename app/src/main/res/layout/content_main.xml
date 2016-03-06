@@ -16,19 +16,19 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="I suck!"
+        android:text="Title"
         android:id="@+id/placeName"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="I suck!"
+        android:text="Address"
         android:id="@+id/placeAddress"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="I suck!"
+        android:text="Id"
         android:id="@+id/placeCoordinates"/>
 
 
