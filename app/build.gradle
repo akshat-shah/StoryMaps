@@ -28,4 +28,7 @@ dependencies {
     compile 'com.google.android.gms:play-services:8.3.0'
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.google.android.gms:play-services-auth:8.3.0'
+    compile('com.github.afollestad:assent:0.2.0') {
+        transitive = true
+    }
 }

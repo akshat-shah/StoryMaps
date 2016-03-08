@@ -100,6 +100,7 @@ public class GoogleLoginActivity extends AppCompatActivity implements GoogleApiC
 
             GoogleSignInAccount acct = result.getSignInAccount();
             System.out.println(acct.getId());
+
             System.out.println(acct.getEmail());
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
             updateUI(true);
