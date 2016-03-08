@@ -1,25 +1,25 @@
 package vimd.storymaps;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import com.afollestad.assent.Assent;
-import com.afollestad.assent.AssentCallback;
-import com.afollestad.assent.PermissionResultSet;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
@@ -35,8 +35,10 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener
-{
+        implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
+
+    public static final String TAG = "MainActivity";
+
     @Bind(R.id.placeName)
     TextView placeName;
 
@@ -49,14 +51,11 @@ public class MainActivity extends AppCompatActivity
     protected GoogleApiClient mGoogleApiClient;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-        Assent.setActivity(this, this);
-
         /*
         Create an instance of Google API Client with API : GEO_DATA_API & PLACE_DETECTION_API
          */
@@ -68,53 +67,20 @@ public class MainActivity extends AppCompatActivity
                 .build();
 
         mGoogleApiClient.connect();
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        if (!Assent.isPermissionGranted(Assent.ACCESS_FINE_LOCATION))
-        {
-            /*
-            Request for ACCESS_FINE_LOCATION Permission for Android Marshmallow users
-             */
-            Assent.requestPermissions(new AssentCallback()
-            {
-                @Override
-                public void onPermissionResult(PermissionResultSet result)
-                {
-                    if (result.isGranted(Assent.ACCESS_FINE_LOCATION))
-                    {
-                        getCurrentLocation();
-                    }
-                    else
-                    {
-                        /*
-                        Figure out a way to get this snackbar to work.
-
-                        Snackbar.make(getWindow(MainActivity.this.findViewById(R.layout.content_main), "Need access to Location.", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
-                         */
-
-                    }
-                }
-            }, 69, Assent.ACCESS_FINE_LOCATION);
-        }
-        else
-        {
-            getCurrentLocation();
-        }
-
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                if (mGoogleApiClient == null || !mGoogleApiClient.isConnected())
-                {
+                if (mGoogleApiClient == null || !mGoogleApiClient.isConnected()) {
                     return;
                 }
-                try
-                {
+
+                try {
                     PlacePicker.IntentBuilder intentBuilder = new PlacePicker.IntentBuilder();
                     Intent intent = intentBuilder.build(MainActivity.this);
                     /*
@@ -122,12 +88,10 @@ public class MainActivity extends AppCompatActivity
                       */
                     startActivityForResult(intent, 1);
 
-                } catch (GooglePlayServicesRepairableException e)
-                {
+                } catch (GooglePlayServicesRepairableException e) {
                     System.out.println("Catch 1");
                     // ...
-                } catch (GooglePlayServicesNotAvailableException e)
-                {
+                } catch (GooglePlayServicesNotAvailableException e) {
                     System.out.println("Catch 2");
                     // ...
                 }
@@ -142,21 +106,61 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        int permissionCheck = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION);
+
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+
+            requestLocationPermission();
+        } else {
+            Log.i(TAG,
+                    "FINE_LOCATION permission has already been granted. Displaying current location.");
+            getCurrentLocation();
+        }
+
+    }
+
+    private void requestLocationPermission() {
+        Log.i(TAG, "FINE_LOCATION permission has NOT been granted. Requesting permission.");
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+    }
+
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == 1)
+        {
+            Log.i(TAG, "Received response for FINE_LOCATION permission request.");
+
+            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Camera permission has been granted, preview can be displayed
+                Log.i(TAG, "CAMERA permission has now been granted. Showing preview.");
+                getCurrentLocation();
+            } else {
+                Log.i(TAG, "CAMERA permission was NOT granted.");
+            }
+        }
     }
 
     private void getCurrentLocation()
     {
         PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
                 .getCurrentPlace(mGoogleApiClient, null);
-        result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>()
-        {
+        result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
             @Override
-            public void onResult(PlaceLikelihoodBuffer likelyPlaces)
-            {
+            public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
                 placeName.setText(likelyPlaces.get(0).getPlace().getName());
                 placeId.setText(likelyPlaces.get(0).getPlace().getId());
+
+                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                    Log.i("TAG", String.format("Place '%s' has likelihood: %g",
+                            placeLikelihood.getPlace().getName(),
+                            placeLikelihood.getLikelihood()));
+                }
+                likelyPlaces.release();
             }
         });
+
     }
 
     @Override
